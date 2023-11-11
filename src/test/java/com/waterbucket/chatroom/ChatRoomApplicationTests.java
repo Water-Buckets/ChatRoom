@@ -10,4 +10,10 @@ class ChatRoomApplicationTests {
     void contextLoads() {
     }
 
+    @Test
+    public void testSaveUser() {
+
+    }
+
+
 }

@@ -15,15 +15,12 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
     private String content;
-    private LocalDateTime timestamp;
+    private LocalDateTime createTime;
 
     @ManyToOne
     private User sender;
 
-    public void setChatRoom(ChatRoom chatRoom) {
-        this.chatRoom = chatRoom;
-    }
-
     @ManyToOne
+    @Setter
     private ChatRoom chatRoom;
 }

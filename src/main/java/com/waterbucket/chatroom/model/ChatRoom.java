@@ -3,6 +3,7 @@ package com.waterbucket.chatroom.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public class ChatRoom {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
     private String name;
+    private LocalDateTime createTime;
 
     @OneToMany(mappedBy = "chatRoom")
     private List<Message> messages;

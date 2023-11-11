@@ -1,24 +1,62 @@
 package com.waterbucket.chatroom.config;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.List;
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig implements SecurityFilterChain {
-    @Override
-    public boolean matches(HttpServletRequest request) {
-        return false;
+public class SecurityConfig {
+
+    private final DataSource dataSource;
+
+    public SecurityConfig(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
-    @Override
-    public List<Filter> getFilters() {
-        return null;
+    @Bean
+    public UserDetailsService userDetailsService() {
+        JdbcDaoImpl jdbcDao = new JdbcDaoImpl();
+        jdbcDao.setDataSource(dataSource);
+        jdbcDao.setUsersByUsernameQuery("SELECT username, password, enabled FROM users WHERE username = ?");
+        jdbcDao.setAuthoritiesByUsernameQuery("SELECT username, authority FROM authorities WHERE username = ?");
+        return jdbcDao;
     }
-// todo finish the SecurityConfig class.
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        //noinspection Convert2MethodRef
+        http
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers("/static/**").permitAll()
+                                .requestMatchers("/", "/home").permitAll()
+                                .anyRequest().authenticated()
+                )
+                .formLogin(formLogin ->
+                        formLogin
+                                .loginPage("/login")
+                                .permitAll()
+                )
+                .logout(logout ->
+                        logout
+                                .logoutUrl("/logout")
+                                .logoutSuccessUrl("/home")
+                )
+                .csrf((csrf) -> csrf.disable());
+        return http.build();
+    }
 }
