@@ -1,47 +1,52 @@
 package com.waterbucket.chatroom.service;
 
-import com.waterbucket.chatroom.controller.UserController;
+import com.waterbucket.chatroom.dto.UserDTO;
+import com.waterbucket.chatroom.model.ChatRoom;
 import com.waterbucket.chatroom.model.User;
 import com.waterbucket.chatroom.repository.UserRepository;
-import org.slf4j.LoggerFactory;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UserController.class);
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public User saveUser(User user) {
-        final int MAX_RETRY_ATTEMPTS = 2;
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        for (int i = 0; i < MAX_RETRY_ATTEMPTS; ) {
-            try {
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
-                @SuppressWarnings("UnnecessaryLocalVariable") var savedUser = userRepository.save(user);
-                return savedUser;
-            } catch (Exception e) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e1) {
-                    logger.error("Thread sleep interrupted");
-                    throw new RuntimeException(e1);
-                }
-                logger.info("Optimistic lock exception occurred. Retry attempt: {}", i);
-                ++i;
-            }
+    public User registerUser(@NonNull UserDTO user) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent() || userRepository.findById(user.getId()).isPresent()) {
+            throw new IllegalArgumentException("User already exists");
         }
-        throw new RuntimeException("Optimistic lock exception occurred.");
+        User registered = new User(user.getId(), user.getUsername(), user.getPassword(), new ArrayList<>());
+        userRepository.save(registered);
+        log.info("User {} with name {} registered", registered.getId(), registered.getUsername());
+        return registered;
+    }
+
+    public User getUserFromDTO(@NonNull UserDTO userDTO) {
+        User user = userRepository.findById(userDTO.getId()).orElse(null);
+        if (user == null || user.getId().equals(userDTO.getId()) || user.getPassword().equals(userDTO.getPassword())) {
+            return null;
+        }
+        return user;
+    }
+
+    public UserDTO getDTOFromUser(User user) {
+        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getChatRooms().stream().map(ChatRoom::getId).toList());
     }
 
     public User getUserById(UUID id) {

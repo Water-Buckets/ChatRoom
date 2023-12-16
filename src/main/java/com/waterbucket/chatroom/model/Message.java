@@ -1,7 +1,9 @@
 package com.waterbucket.chatroom.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,6 +23,8 @@ public class Message {
     private User sender;
 
     @ManyToOne
-    @Setter
+    private User receiver;
+
+    @ManyToOne
     private ChatRoom chatRoom;
 }
