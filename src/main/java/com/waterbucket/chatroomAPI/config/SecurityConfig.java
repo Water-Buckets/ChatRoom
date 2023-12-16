@@ -1,34 +1,36 @@
-package com.waterbucket.chatroom.config;
+package com.waterbucket.chatroomAPI.config;
 
+import com.waterbucket.chatroomAPI.model.User;
+import com.waterbucket.chatroomAPI.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.sql.DataSource;
+import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final DataSource dataSource;
+    private final UserRepository userRepository;
 
-    public SecurityConfig(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public SecurityConfig(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
-        JdbcDaoImpl jdbcDao = new JdbcDaoImpl();
-        jdbcDao.setDataSource(dataSource);
-        jdbcDao.setUsersByUsernameQuery("SELECT username, password, enabled FROM users WHERE username = ?");
-        jdbcDao.setAuthoritiesByUsernameQuery("SELECT username, authority FROM authorities WHERE username = ?");
-        return jdbcDao;
+        return username -> {
+            Optional<User> user = userRepository.findByUsername(username);
+            if (user.isPresent()) return user.get();
+            throw new UsernameNotFoundException("User '" + username + "' not found");
+        };
     }
 
     @Bean
@@ -44,19 +46,11 @@ public class SecurityConfig {
                         authorizeRequests
                                 .requestMatchers("/static/**").permitAll()
                                 .requestMatchers("/", "/home").permitAll()
-                                .anyRequest().authenticated()
+                                .requestMatchers("/users/**").permitAll()
+                                .requestMatchers("/chat/**").permitAll()
+                                .anyRequest().permitAll()
                 )
-                .formLogin(formLogin ->
-                        formLogin
-                                .loginPage("/login")
-                                .permitAll()
-                )
-                .logout(logout ->
-                        logout
-                                .logoutUrl("/logout")
-                                .logoutSuccessUrl("/home")
-                )
-                .csrf((csrf) -> csrf.disable());
+                .csrf(csrf -> csrf.disable());
         return http.build();
     }
 }
