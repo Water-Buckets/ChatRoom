@@ -1,6 +1,6 @@
-package com.waterbucket.chatroom.repository;
+package com.waterbucket.chatroomAPI.repository;
 
-import com.waterbucket.chatroom.model.ChatRoom;
+import com.waterbucket.chatroomAPI.model.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
