@@ -7,6 +7,7 @@ import com.waterbucket.chatroom.repository.UserRepository;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,9 +38,10 @@ public class UserService {
         return registered;
     }
 
+    @Caching
     public User getUserFromDTO(@NonNull UserDTO userDTO) {
         User user = userRepository.findById(userDTO.getId()).orElse(null);
-        if (user == null || user.getId().equals(userDTO.getId()) || user.getPassword().equals(userDTO.getPassword())) {
+        if (user == null || user.getId().equals(userDTO.getId()) || passwordEncoder.matches(user.getPassword(), userDTO.getPassword())) {
             return null;
         }
         return user;
@@ -59,6 +61,10 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public List<UserDTO> getAllUserDTOs() {
+        return this.getAllUsers().stream().map(this::getDTOFromUser).toList();
     }
 
     public void deleteUser(UUID id) {

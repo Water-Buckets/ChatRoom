@@ -16,14 +16,14 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/chat")
-public class ChatController {
+@RequestMapping("/api/chat")
+public class ChatAPIController {
 
     private final ChatRoomService chatRoomService;
     private final MessageService messageService;
 
     @Autowired
-    public ChatController(ChatRoomService chatRoomService, MessageService messageService) {
+    public ChatAPIController(ChatRoomService chatRoomService, MessageService messageService) {
         this.chatRoomService = chatRoomService;
         this.messageService = messageService;
     }
