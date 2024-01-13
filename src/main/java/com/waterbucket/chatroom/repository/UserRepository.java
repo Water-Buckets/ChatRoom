@@ -1,11 +1,13 @@
 package com.waterbucket.chatroom.repository;
 
 import com.waterbucket.chatroom.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByUsername(String username);
+@Repository
+public interface UserRepository extends R2dbcRepository<User, UUID> {
+    Mono<User> findByUsername(String username);
 }

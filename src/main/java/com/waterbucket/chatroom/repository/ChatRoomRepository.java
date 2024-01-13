@@ -1,11 +1,13 @@
 package com.waterbucket.chatroom.repository;
 
 import com.waterbucket.chatroom.model.ChatRoom;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 import java.util.UUID;
 
-public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
-    Optional<ChatRoom> findByName(String name);
+@Repository
+public interface ChatRoomRepository extends R2dbcRepository<ChatRoom, UUID> {
+    Mono<ChatRoom> findByName(String name);
 }

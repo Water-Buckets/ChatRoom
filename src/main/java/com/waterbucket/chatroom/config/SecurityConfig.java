@@ -1,6 +1,5 @@
 package com.waterbucket.chatroom.config;
 
-import com.waterbucket.chatroom.model.User;
 import com.waterbucket.chatroom.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +10,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
@@ -27,8 +24,8 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> {
-            Optional<User> user = userRepository.findByUsername(username);
-            if (user.isPresent()) return user.get();
+            var user = userRepository.findByUsername(username);
+            if (Boolean.TRUE.equals(user.hasElement().block())) return user.block();
             throw new UsernameNotFoundException("User '" + username + "' not found");
         };
     }

@@ -2,12 +2,15 @@ package com.waterbucket.chatroom.service;
 
 import com.waterbucket.chatroom.model.ChatRoom;
 import com.waterbucket.chatroom.repository.ChatRoomRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ChatRoomService {
 
@@ -18,23 +21,26 @@ public class ChatRoomService {
         this.chatRoomRepository = chatRoomRepository;
     }
 
-    public ChatRoom saveChatRoom(ChatRoom chatRoom) {
-        return chatRoomRepository.save(chatRoom);
+    public Mono<ChatRoom> saveChatRoom(Mono<ChatRoom> chatRoom) {
+        return chatRoom.flatMap(chatRoom1 -> {
+            log.info("ChatRoom {} with name: {} has been created", chatRoom1.getId(), chatRoom1.getName());
+            return chatRoomRepository.save(chatRoom1);
+        });
     }
 
-    public ChatRoom getChatRoomByName(String name) {
-        return chatRoomRepository.findByName(name).orElse(null);
+    public Mono<ChatRoom> getChatRoomByName(String name) {
+        return chatRoomRepository.findByName(name);
     }
 
-    public ChatRoom getChatRoomById(UUID id) {
-        return chatRoomRepository.findById(id).orElse(null);
+    public Mono<ChatRoom> getChatRoomById(UUID id) {
+        return chatRoomRepository.findById(id);
     }
 
-    public List<ChatRoom> getAllChatRooms() {
+    public Flux<ChatRoom> getAllChatRooms() {
         return chatRoomRepository.findAll();
     }
 
-    public void deleteChatRoom(UUID id) {
-        chatRoomRepository.deleteById(id);
+    public Mono<Void> deleteChatRoom(UUID id) {
+        return chatRoomRepository.deleteById(id);
     }
 }

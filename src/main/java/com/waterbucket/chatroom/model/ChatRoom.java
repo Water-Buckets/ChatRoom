@@ -1,10 +1,10 @@
 package com.waterbucket.chatroom.model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -14,7 +14,8 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
+@EqualsAndHashCode(exclude = "id")
+@Table
 public class ChatRoom implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -23,14 +24,11 @@ public class ChatRoom implements Serializable {
     private String name;
     private LocalDateTime createTime;
 
-    @OneToMany(mappedBy = "chatRoom")
-    private List<Message> messages;
+    private List<UUID> messages;
 
     @NonNull
-    @ManyToOne
-    private User user;
+    private UUID creator;
 
     @NonNull
-    @ManyToOne
-    private User otherUser;
+    private UUID otherUser;
 }

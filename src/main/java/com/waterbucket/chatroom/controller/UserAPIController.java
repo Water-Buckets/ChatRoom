@@ -3,80 +3,57 @@ package com.waterbucket.chatroom.controller;
 import com.waterbucket.chatroom.dto.UserDTO;
 import com.waterbucket.chatroom.model.User;
 import com.waterbucket.chatroom.service.UserService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
-@Slf4j
 @RestController
 @RequestMapping(value = "/api/users", produces = "application/json")
 public class UserAPIController {
-
     private final UserService userService;
-    PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserAPIController(UserService userService, PasswordEncoder passwordEncoder) {
+    public UserAPIController(UserService userService) {
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        try {
-            User registeredUser = userService.registerUser(user);
-            return ResponseEntity.ok(userService.getDTOFromUser(registeredUser));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public Mono<UserDTO> registerUser(@RequestBody Mono<UserDTO> user) {
+        return userService.registerUser(user).flatMap(userService::getDTOFromUser);
     }
 
     @GetMapping(value = "/{id}", params = "user")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> getUser(@PathVariable UUID id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(user);
+    public Mono<User> getUser(@PathVariable UUID id) {
+        return userService.getUserById(id);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<UserDTO> getUserDTO(@PathVariable UUID id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        UserDTO userDTO = userService.getDTOFromUser(user);
-        userDTO.setPassword("");
-        return ResponseEntity.ok(userDTO);
+    protected Mono<UserDTO> getUserDTO(@PathVariable UUID id) {
+        return userService.getUserById(id).flatMap(userService::getDTOFromUser).mapNotNull(this::userDTODesensitisation);
     }
 
     @GetMapping(params = "name")
-    public ResponseEntity<UserDTO> getUserByName(@RequestParam("name") String name) {
-        User user = userService.getUserByUsername(name);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(userService.getDTOFromUser(user));
+    public Mono<UserDTO> getUserByName(@RequestParam("name") String name) {
+        return userService.getUserByUsername(name).flatMap(userService::getDTOFromUser).mapNotNull(this::userDTODesensitisation);
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUserDTOs().stream().peek(userDTO -> userDTO.setPassword("")).toList());
+    public Flux<UserDTO> getAllUsers() {
+        return userService.getAllUserDTOs().mapNotNull(this::userDTODesensitisation);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    public Mono<Void> deleteUser(@PathVariable UUID id) {
+        return userService.deleteUser(id);
+    }
+
+    private UserDTO userDTODesensitisation(UserDTO userDTO) {
+        userDTO.setPassword("");
+        return userDTO;
     }
 }

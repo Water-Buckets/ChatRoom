@@ -6,12 +6,10 @@ import com.waterbucket.chatroom.service.ChatRoomService;
 import com.waterbucket.chatroom.service.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -29,56 +27,32 @@ public class ChatAPIController {
     }
 
     @PostMapping("/rooms")
-    public ResponseEntity<ChatRoom> createChatRoom(@RequestBody ChatRoom chatRoom) {
-        log.info("Creating chatroom: {}", chatRoom.getName());
-        try {
-            ChatRoom createdChatRoom = chatRoomService.saveChatRoom(chatRoom);
-            log.info("Chatroom created successfully.");
-            return ResponseEntity.ok(createdChatRoom);
-        } catch (Exception e) {
-            log.error("Error while creating chatroom: {}", chatRoom.getName());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public Mono<ChatRoom> createChatRoom(@RequestBody Mono<ChatRoom> chatRoom) {
+        return chatRoomService.saveChatRoom(chatRoom);
     }
 
-    @GetMapping("/rooms/{roomId}")
-    public ResponseEntity<ChatRoom> getChatRoom(@PathVariable UUID roomId) {
-        ChatRoom chatRoom = chatRoomService.getChatRoomById(roomId);
-        if (chatRoom == null) {
-            log.warn("Chatroom not found with id: {}", roomId);
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(chatRoom);
+    @GetMapping("/rooms/{id}")
+    public Mono<ChatRoom> getChatRoom(@PathVariable UUID id) {
+        return chatRoomService.getChatRoomById(id);
     }
 
     @GetMapping("/rooms")
-    public ResponseEntity<List<ChatRoom>> getAllChatRooms() {
-        return ResponseEntity.ok(chatRoomService.getAllChatRooms());
+    public Flux<ChatRoom> getAllChatRooms() {
+        return chatRoomService.getAllChatRooms();
     }
 
-    @PostMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<Message> createMessage(@PathVariable UUID roomId, @RequestBody Message message) {
-        message.setChatRoom(chatRoomService.getChatRoomById(roomId));
-        message.setCreateTime(LocalDateTime.now());
-        log.info("Creating message in chatroom: {}", roomId);
-        try {
-            Message createdMessage = messageService.saveMessage(message);
-            log.info("Message created successfully.");
-            return ResponseEntity.ok(createdMessage);
-        } catch (Exception e) {
-            log.error("Error while creating message: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @PostMapping("/rooms/{id}/messages")
+    public Mono<Message> createMessage(@PathVariable UUID id, @RequestBody Mono<Message> message) {
+        return messageService.saveMessage(message, id);
     }
 
-    @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<List<Message>> getMessagesByRoomId(@PathVariable UUID roomId) {
-        return ResponseEntity.ok(messageService.getMessagesByChatRoom(chatRoomService.getChatRoomById(roomId)));
+    @GetMapping("/rooms/{id}/messages")
+    public Flux<Message> getMessagesByRoomId(@PathVariable UUID id) {
+        return messageService.getMessagesByChatRoom(chatRoomService.getChatRoomById(id));
     }
 
     @DeleteMapping("/rooms/{roomId}")
-    public ResponseEntity<Void> deleteChatRoom(@PathVariable UUID roomId) {
-        chatRoomService.deleteChatRoom(roomId);
-        return ResponseEntity.noContent().build();
+    public Mono<Void> deleteChatRoom(@PathVariable UUID roomId) {
+        return chatRoomService.deleteChatRoom(roomId);
     }
 }

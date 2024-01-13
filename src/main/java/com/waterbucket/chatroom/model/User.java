@@ -1,24 +1,22 @@
 package com.waterbucket.chatroom.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
+@RequiredArgsConstructor
 @AllArgsConstructor
-@Entity
-public class User implements UserDetails, Serializable {
+@EqualsAndHashCode(exclude = "id")
+@Table
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -27,9 +25,8 @@ public class User implements UserDetails, Serializable {
     private String username;
     @NonNull
     private String password;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<ChatRoom> chatRooms;
+    private List<UUID> chatRooms;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
