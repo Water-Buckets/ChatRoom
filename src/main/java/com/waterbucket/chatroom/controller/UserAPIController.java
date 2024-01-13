@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,23 +16,26 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping(value = "/api/users", produces = "application/json")
 public class UserAPIController {
 
     private final UserService userService;
+    PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserAPIController(UserService userService) {
+    public UserAPIController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<?> registerUser(@RequestBody UserDTO user) {
+    public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         try {
             User registeredUser = userService.registerUser(user);
-            return ResponseEntity.ok(registeredUser);
+            return ResponseEntity.ok(userService.getDTOFromUser(registeredUser));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
@@ -51,12 +55,14 @@ public class UserAPIController {
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(userService.getDTOFromUser(user));
+        UserDTO userDTO = userService.getDTOFromUser(user);
+        userDTO.setPassword("");
+        return ResponseEntity.ok(userDTO);
     }
 
-    @PostMapping(value = "/{id}", consumes = "application/json")
-    public ResponseEntity<UserDTO> verifyUser(UserDTO userDTO) {
-        User user = userService.getUserFromDTO(userDTO);
+    @GetMapping(params = "name")
+    public ResponseEntity<UserDTO> getUserByName(@RequestParam("name") String name) {
+        User user = userService.getUserByUsername(name);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -64,18 +70,11 @@ public class UserAPIController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUserDTOs());
-    }
-
-    @GetMapping(params = "{name}")
-    public ResponseEntity<UserDTO> getUserByName(String name) {
-        return ResponseEntity.ok(userService.getDTOFromUser(userService.getUserByUsername(name)));
+        return ResponseEntity.ok(userService.getAllUserDTOs().stream().peek(userDTO -> userDTO.setPassword("")).toList());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

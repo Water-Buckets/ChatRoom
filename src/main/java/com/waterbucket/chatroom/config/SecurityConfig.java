@@ -40,15 +40,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        //noinspection Convert2MethodRef
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/static/**").permitAll()
-                                .requestMatchers("/", "/home").permitAll()
-                                .requestMatchers("/users/**").permitAll()
-                                .requestMatchers("/chat/**").permitAll()
                                 .anyRequest().permitAll()
-                );
+                ).csrf(csrf -> csrf.disable());
         return http.build();
     }
 }
