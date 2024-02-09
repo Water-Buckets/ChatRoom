@@ -22,9 +22,9 @@ public class ChatRoomService {
     }
 
     public Mono<ChatRoom> saveChatRoom(Mono<ChatRoom> chatRoom) {
-        return chatRoom.flatMap(chatRoom1 -> {
-            log.info("ChatRoom {} with name: {} has been created", chatRoom1.getId(), chatRoom1.getName());
-            return chatRoomRepository.save(chatRoom1);
+        return chatRoom.flatMap(cr -> {
+            log.info("ChatRoom {} with name: {} has been created", cr.getId(), cr.getName());
+            return chatRoomRepository.save(cr);
         });
     }
 

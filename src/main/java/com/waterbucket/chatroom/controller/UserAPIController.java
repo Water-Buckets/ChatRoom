@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(value = "/api/users", produces = "application/json")
+@RequestMapping(value = "/api/users")
 public class UserAPIController {
     private final UserService userService;
 
@@ -21,7 +21,7 @@ public class UserAPIController {
         this.userService = userService;
     }
 
-    @PostMapping(value = "/register", consumes = "application/json")
+    @PostMapping(value = "/register")
     public Mono<UserDTO> registerUser(@RequestBody Mono<UserDTO> user) {
         return userService.registerUser(user).flatMap(userService::getDTOFromUser);
     }

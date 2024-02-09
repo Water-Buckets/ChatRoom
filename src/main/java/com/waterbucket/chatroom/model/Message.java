@@ -13,6 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table
+@Entity
 public class Message implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -20,10 +21,10 @@ public class Message implements Serializable {
     private String content;
     private LocalDateTime createTime;
 
-    @ManyToOne
+    @OneToOne
     private User sender;
 
-    @ManyToOne
+    @OneToOne
     private User receiver;
 
     @ManyToOne

@@ -1,6 +1,7 @@
 package com.waterbucket.chatroom.service;
 
 import com.waterbucket.chatroom.dto.UserDTO;
+import com.waterbucket.chatroom.model.ChatRoom;
 import com.waterbucket.chatroom.model.User;
 import com.waterbucket.chatroom.repository.UserRepository;
 import lombok.NonNull;
@@ -67,7 +68,7 @@ public class UserService {
 
     @Cacheable(cacheNames = "UserService - getDTOFromUser", key = "#user.id", cacheManager = "cacheManager")
     public Mono<UserDTO> getDTOFromUser(User user) {
-        return Mono.just(new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getChatRooms()));
+        return Mono.just(new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getChatRooms().stream().map(ChatRoom::getId).toList()));
     }
 
     @Cacheable(cacheNames = "UserService - getUserById", key = "#id", cacheManager = "cacheManager")

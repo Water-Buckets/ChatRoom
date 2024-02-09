@@ -15,6 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = "id")
+@Entity
 @Table
 public class User implements UserDetails {
     @Id
@@ -25,8 +26,9 @@ public class User implements UserDetails {
     private String username;
     @NonNull
     private String password;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<UUID> chatRooms;
+    private List<ChatRoom> chatRooms;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
